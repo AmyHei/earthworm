@@ -71,6 +71,13 @@
       "when": 1722416147800,
       "tag": "0009_typical_xorn",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1758841058488,
+      "tag": "0010_sparkling_angel",
+      "breakpoints": true
     }
   ]
 }

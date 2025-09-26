@@ -26,9 +26,16 @@ export class AuthGuard implements CanActivate {
 
     if (!token && uncheck) {
       request["userId"] = null;
+      return true;
     } else if (!token) {
       throw new UnauthorizedException();
     }
+
+    if (uncheck) {
+      request["userId"] = null;
+      return true;
+    }
+
     try {
       const payload = await this.jwtVerify(token);
 
@@ -42,9 +49,7 @@ export class AuthGuard implements CanActivate {
 
       request["userId"] = payload.sub;
     } catch (e) {
-      if (!uncheck) {
-        throw new UnauthorizedException();
-      }
+      throw new UnauthorizedException();
     }
     return true;
   }

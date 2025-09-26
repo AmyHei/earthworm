@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { and, asc, eq, or } from "drizzle-orm";
+import { and, asc, eq, isNull, or } from "drizzle-orm";
 
 import { course, coursePack } from "@earthworm/schema";
 import { CourseHistoryService } from "../course-history/course-history.service";
@@ -56,10 +56,92 @@ export class CoursePackService {
   }
 
   async findAllPublicCoursePacks() {
+    // Return only level 1 course packs (教材版本) - with level field
     return await this.db.query.coursePack.findMany({
+      orderBy: asc(coursePack.order),
+      where: and(eq(coursePack.shareLevel, "public"), eq(coursePack.level, 1)),
+    });
+  }
+
+  async findTextbookGrades(textbookId: string) {
+    // Return level 2 course packs (年级学期) for a textbook
+    return await this.db.query.coursePack.findMany({
+      orderBy: asc(coursePack.order),
+      where: and(
+        eq(coursePack.shareLevel, "public"),
+        eq(coursePack.level, 2),
+        eq(coursePack.parentId, textbookId),
+      ),
+    });
+  }
+
+  async findGradeUnits(gradeId: string) {
+    // Return level 3 course packs (单元) for a grade
+    return await this.db.query.coursePack.findMany({
+      orderBy: asc(coursePack.order),
+      where: and(
+        eq(coursePack.shareLevel, "public"),
+        eq(coursePack.level, 3),
+        eq(coursePack.parentId, gradeId),
+      ),
+      with: {
+        courses: {
+          orderBy: asc(course.order),
+        },
+      },
+    });
+  }
+
+  async findChildrenCoursePacks(parentId: string) {
+    return await this.db.query.coursePack.findMany({
+      orderBy: asc(coursePack.order),
+      where: and(eq(coursePack.shareLevel, "public"), eq(coursePack.parentId, parentId)),
+    });
+  }
+
+  async getHierarchicalStructure() {
+    // Get all public course packs organized by level
+    const textbooks = await this.findAllPublicCoursePacks();
+
+    const result = [];
+    for (const textbook of textbooks) {
+      const grades = await this.findTextbookGrades(textbook.id);
+      const textbookWithGrades = {
+        ...textbook,
+        grades: [],
+      };
+
+      for (const grade of grades) {
+        const units = await this.findGradeUnits(grade.id);
+        textbookWithGrades.grades.push({
+          ...grade,
+          units,
+        });
+      }
+
+      result.push(textbookWithGrades);
+    }
+
+    return result;
+  }
+
+  async debugAllCoursePacks() {
+    const allCoursePacks = await this.db.query.coursePack.findMany({
       orderBy: asc(coursePack.order),
       where: eq(coursePack.shareLevel, "public"),
     });
+
+    const byLevel = {
+      level1: allCoursePacks.filter((cp) => cp.level === 1),
+      level2: allCoursePacks.filter((cp) => cp.level === 2),
+      level3: allCoursePacks.filter((cp) => cp.level === 3),
+    };
+
+    return {
+      total: allCoursePacks.length,
+      byLevel,
+      allCoursePacks,
+    };
   }
 
   async findOne(coursePackId: string) {

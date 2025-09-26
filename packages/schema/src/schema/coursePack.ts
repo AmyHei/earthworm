@@ -15,10 +15,20 @@ export const coursePack = pgTable("course_packs", {
   cover: text("cover"),
   creatorId: text("creator_id").notNull(),
   shareLevel: text("share_level").default("private"),
+  parentId: text("parent_id"),
+  level: integer("level").notNull().default(1),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").$onUpdateFn(() => new Date()),
 });
 
-export const coursePackRelations = relations(coursePack, ({ many }) => ({
+export const coursePackRelations = relations(coursePack, ({ one, many }) => ({
   courses: many(course),
+  children: many(coursePack, {
+    relationName: "parentChild",
+  }),
+  parent: one(coursePack, {
+    fields: [coursePack.parentId],
+    references: [coursePack.id],
+    relationName: "parentChild",
+  }),
 }));

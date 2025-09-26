@@ -32,3 +32,24 @@ export async function fetchCoursePack(coursePackId: string) {
     method: "get",
   })) as CoursePack;
 }
+
+export async function fetchHierarchicalStructure() {
+  const http = getHttp();
+  return await http("/course-pack/hierarchy", {
+    method: "get",
+  });
+}
+
+export async function fetchTextbookGrades(textbookId: string) {
+  const http = getHttp();
+  return (await http<CoursePacksItemApiResponse[]>(`/course-pack/textbook/${textbookId}/grades`, {
+    method: "get",
+  })) as CoursePacksItem[];
+}
+
+export async function fetchGradeUnits(gradeId: string) {
+  const http = getHttp();
+  return (await http<CoursePacksItemApiResponse[]>(`/course-pack/grade/${gradeId}/units`, {
+    method: "get",
+  })) as CoursePacksItem[];
+}

@@ -17,6 +17,34 @@ export class CoursePackController {
 
   @UncheckAuth()
   @UseGuards(AuthGuard)
+  @Get("hierarchy")
+  async getHierarchy() {
+    return await this.coursePackService.getHierarchicalStructure();
+  }
+
+  @UncheckAuth()
+  @UseGuards(AuthGuard)
+  @Get("debug/all")
+  async debugAll() {
+    return await this.coursePackService.debugAllCoursePacks();
+  }
+
+  @UncheckAuth()
+  @UseGuards(AuthGuard)
+  @Get("textbook/:textbookId/grades")
+  async getTextbookGrades(@Param("textbookId") textbookId: string) {
+    return await this.coursePackService.findTextbookGrades(textbookId);
+  }
+
+  @UncheckAuth()
+  @UseGuards(AuthGuard)
+  @Get("grade/:gradeId/units")
+  async getGradeUnits(@Param("gradeId") gradeId: string) {
+    return await this.coursePackService.findGradeUnits(gradeId);
+  }
+
+  @UncheckAuth()
+  @UseGuards(AuthGuard)
   @Get(":coursePackId")
   async findOne(@User() user: UserEntity, @Param("coursePackId") coursePackId: string) {
     return await this.coursePackService.findOneWithCourses(user.userId, coursePackId);
